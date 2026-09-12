@@ -1,345 +1,62 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
+import "./index.css";
 
-const features = [
-  {
-    icon: "🤖",
-    title: "AI Assistant",
-    text: "Answer customer questions automatically and help turn conversations into sales."
-  },
-  {
-    icon: "💬",
-    title: "WhatsApp Sales",
-    text: "Manage customer conversations and sales inquiries from one dashboard."
-  },
-  {
-    icon: "📦",
-    title: "Products",
-    text: "Keep your products, prices and stock information organized."
-  },
-  {
-    icon: "👥",
-    title: "Customers",
-    text: "Understand customers and keep useful conversation history."
-  },
-  {
-    icon: "🧾",
-    title: "Orders",
-    text: "Track orders from customer inquiry to completed sale."
-  },
-  {
-    icon: "📊",
-    title: "Business Insights",
-    text: "See useful sales information and discover opportunities to grow."
-  }
+const menu = [
+  ["dashboard", "⌂", "Dashboard"],
+  ["products", "▣", "Products"],
+  ["customers", "♙", "Customers"],
+  ["orders", "▤", "Orders"],
+  ["assistant", "✦", "AI Assistant"],
 ];
 
 function App() {
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState("dashboard");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) return <Loading />;
+
+  if (!session) {
+    return <Auth />;
+  }
 
   return (
-    <div className="app">
-      <header className="navbar">
-        <div className="brand">
-          <div className="brand-mark">S</div>
-          <span>SELLORA</span>
-        </div>
+    <Dashboard
+      session={session}
+      page={page}
+      setPage={setPage}
+    />
+  );
+}
 
-        <nav>
-          <a href="#features">Features</a>
-          <a href="#how">How it works</a>
-          <a href="#pricing">Pricing</a>
-        </nav>
-
-        <div className="nav-actions">
-          <button className="btn ghost" onClick={() => setShowLogin(true)}>
-            Log in
-          </button>
-
-          <button className="btn primary" onClick={() => setShowSignup(true)}>
-            Get started
-          </button>
-        </div>
-      </header>
-
-      <main>
-        <section className="hero">
-          <div className="hero-content">
-            <div className="badge">
-              ✨ AI-powered business assistant
-            </div>
-
-            <h1>
-              Turn customer conversations
-              <span> into more sales.</span>
-            </h1>
-
-            <p>
-              SELLORA helps small businesses manage customers, products,
-              orders and AI-powered conversations from one simple platform.
-            </p>
-
-            <div className="hero-actions">
-              <button
-                className="btn primary large"
-                onClick={() => setShowSignup(true)}
-              >
-                Start selling smarter →
-              </button>
-
-              <a className="btn secondary large" href="#how">
-                See how it works
-              </a>
-            </div>
-
-            <div className="trust">
-              <span>✓ AI assistance</span>
-              <span>✓ WhatsApp ready</span>
-              <span>✓ Built for small businesses</span>
-            </div>
-          </div>
-
-          <div className="dashboard-preview">
-            <div className="preview-header">
-              <div>
-                <small>SELLORA</small>
-                <strong>Business Overview</strong>
-              </div>
-              <div className="avatar">A</div>
-            </div>
-
-            <div className="stats">
-              <div className="stat">
-                <small>Sales</small>
-                <strong>TZS 1.84M</strong>
-                <span className="up">+18.4%</span>
-              </div>
-
-              <div className="stat">
-                <small>Orders</small>
-                <strong>126</strong>
-                <span className="up">+12.8%</span>
-              </div>
-
-              <div className="stat">
-                <small>Customers</small>
-                <strong>384</strong>
-                <span className="up">+9.2%</span>
-              </div>
-            </div>
-
-            <div className="ai-card">
-              <div className="ai-icon">✦</div>
-              <div>
-                <strong>AI Assistant</strong>
-                <p>
-                  12 customer conversations need attention today.
-                </p>
-              </div>
-              <span className="online">●</span>
-            </div>
-
-            <div className="activity">
-              <div className="activity-title">
-                <strong>Recent activity</strong>
-                <span>View all</span>
-              </div>
-
-              <div className="activity-row">
-                <div className="circle">J</div>
-                <div>
-                  <strong>New order</strong>
-                  <small>John • 2 minutes ago</small>
-                </div>
-                <b>TZS 85,000</b>
-              </div>
-
-              <div className="activity-row">
-                <div className="circle">M</div>
-                <div>
-                  <strong>Customer inquiry</strong>
-                  <small>Maria • 8 minutes ago</small>
-                </div>
-                <span className="pending">Pending</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="section" id="features">
-          <div className="section-heading">
-            <span className="eyebrow">POWERFUL TOOLS</span>
-            <h2>Everything you need to sell smarter.</h2>
-            <p>
-              One simple platform for managing the parts of your business
-              that matter most.
-            </p>
-          </div>
-
-          <div className="feature-grid">
-            {features.map((feature) => (
-              <div className="feature-card" key={feature.title}>
-                <div className="feature-icon">{feature.icon}</div>
-                <h3>{feature.title}</h3>
-                <p>{feature.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="how" id="how">
-          <div className="section-heading">
-            <span className="eyebrow">HOW IT WORKS</span>
-            <h2>Start in minutes.</h2>
-          </div>
-
-          <div className="steps">
-            <div className="step">
-              <span>01</span>
-              <h3>Create your business</h3>
-              <p>Set up your SELLORA workspace and business information.</p>
-            </div>
-
-            <div className="step">
-              <span>02</span>
-              <h3>Add your products</h3>
-              <p>Add products, prices and information your customers need.</p>
-            </div>
-
-            <div className="step">
-              <span>03</span>
-              <h3>Let AI help you sell</h3>
-              <p>Use AI to handle common customer questions and sales tasks.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="pricing" id="pricing">
-          <div className="section-heading">
-            <span className="eyebrow">PRICING</span>
-            <h2>Simple plans for growing businesses.</h2>
-          </div>
-
-          <div className="pricing-grid">
-            <Pricing
-              name="Free"
-              price="0"
-              description="For businesses getting started."
-              items={[
-                "Product management",
-                "Customer management",
-                "Basic orders",
-                "Basic dashboard"
-              ]}
-            />
-
-            <Pricing
-              featured
-              name="Pro"
-              price="10,000"
-              description="For businesses ready to grow."
-              items={[
-                "Everything in Free",
-                "AI assistant",
-                "Advanced insights",
-                "Customer conversations",
-                "Priority features"
-              ]}
-            />
-
-            <Pricing
-              name="Business"
-              price="25,000"
-              description="For growing teams and businesses."
-              items={[
-                "Everything in Pro",
-                "More AI usage",
-                "Advanced business tools",
-                "Team features",
-                "Priority support"
-              ]}
-            />
-          </div>
-        </section>
-
-        <section className="cta">
-          <div>
-            <span className="eyebrow">SELL SMARTER</span>
-            <h2>Ready to grow your business?</h2>
-            <p>
-              Create your SELLORA account and start building your smarter
-              sales workflow.
-            </p>
-          </div>
-
-          <button
-            className="btn light large"
-            onClick={() => setShowSignup(true)}
-          >
-            Create free account →
-          </button>
-        </section>
-      </main>
-
-      <footer>
-        <div className="brand">
-          <div className="brand-mark">S</div>
-          <span>SELLORA</span>
-        </div>
-
-        <p>AI Sales & Customer Assistant</p>
-
-        <small>© 2026 SELLORA. All rights reserved.</small>
-      </footer>
-
-      {showLogin && (
-        <AuthModal
-          title="Welcome back"
-          button="Log in"
-          onClose={() => setShowLogin(false)}
-        />
-      )}
-
-      {showSignup && (
-        <AuthModal
-          title="Create your SELLORA account"
-          button="Create account"
-          signup
-          onClose={() => setShowSignup(false)}
-        />
-      )}
+function Loading() {
+  return (
+    <div className="loading-screen">
+      <div className="loader-logo">S</div>
+      <h2>SELLORA</h2>
+      <p>Loading your business...</p>
     </div>
   );
 }
 
-function Pricing({ name, price, description, items, featured }) {
-  return (
-    <div className={`price-card ${featured ? "featured" : ""}`}>
-      {featured && <div className="popular">MOST POPULAR</div>}
-
-      <h3>{name}</h3>
-      <p>{description}</p>
-
-      <div className="price">
-        <strong>TZS {price}</strong>
-        {price !== "0" && <span>/month</span>}
-      </div>
-
-      <ul>
-        {items.map((item) => (
-          <li key={item}>✓ {item}</li>
-        ))}
-      </ul>
-
-      <button className={`btn ${featured ? "primary" : "secondary"}`}>
-        Choose {name}
-      </button>
-    </div>
-  );
-}
-
-function AuthModal({ title, button, signup, onClose }) {
+function Auth() {
+  const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -352,31 +69,29 @@ function AuthModal({ title, button, signup, onClose }) {
     setMessage("");
 
     try {
-      if (signup) {
+      if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              business_name: businessName
-            }
-          }
+              business_name: businessName,
+            },
+          },
         });
 
         if (error) throw error;
 
         setMessage(
-          "Account created. Check your email if email confirmation is enabled."
+          "Account created. Check your email if confirmation is enabled."
         );
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
-          password
+          password,
         });
 
         if (error) throw error;
-
-        setMessage("Login successful.");
       }
     } catch (error) {
       setMessage(error.message || "Something went wrong.");
@@ -386,19 +101,71 @@ function AuthModal({ title, button, signup, onClose }) {
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="close" onClick={onClose}>×</button>
-
-        <div className="modal-brand">
-          <div className="brand-mark">S</div>
-          <span>SELLORA</span>
+    <main className="auth-page">
+      <div className="auth-left">
+        <div className="auth-brand">
+          <div className="logo">S</div>
+          <strong>SELLORA</strong>
         </div>
 
-        <h2>{title}</h2>
+        <div className="auth-copy">
+          <span>AI SALES & CUSTOMER ASSISTANT</span>
+          <h1>
+            Run your business
+            <br />
+            <em>smarter.</em>
+          </h1>
+
+          <p>
+            Manage customers, products, orders and AI-powered conversations
+            from one simple platform.
+          </p>
+
+          <div className="benefits">
+            <div>✓ AI customer assistance</div>
+            <div>✓ Product & order management</div>
+            <div>✓ Business insights</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="auth-card">
+        <div className="auth-tabs">
+          <button
+            className={mode === "login" ? "active" : ""}
+            onClick={() => {
+              setMode("login");
+              setMessage("");
+            }}
+          >
+            Log in
+          </button>
+
+          <button
+            className={mode === "signup" ? "active" : ""}
+            onClick={() => {
+              setMode("signup");
+              setMessage("");
+            }}
+          >
+            Create account
+          </button>
+        </div>
+
+        <h2>
+          {mode === "login"
+            ? "Welcome back"
+            : "Create your SELLORA account"}
+        </h2>
+
+        <p className="auth-subtitle">
+          {mode === "login"
+            ? "Log in to continue to your business dashboard."
+            : "Start managing your business with SELLORA."}
+        </p>
 
         <form onSubmit={submit}>
-          {signup && (
+          {mode === "signup" && (
             <label>
               Business name
               <input
@@ -427,19 +194,365 @@ function AuthModal({ title, button, signup, onClose }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Minimum 6 characters"
               minLength="6"
               required
             />
           </label>
 
-          <button className="btn primary full" disabled={loading}>
-            {loading ? "Please wait..." : button}
+          <button className="auth-submit" disabled={loading}>
+            {loading
+              ? "Please wait..."
+              : mode === "login"
+                ? "Log in →"
+                : "Create account →"}
           </button>
         </form>
 
-        {message && <div className="form-message">{message}</div>}
+        {message && <div className="auth-message">{message}</div>}
       </div>
+    </main>
+  );
+}
+
+function Dashboard({ session, page, setPage }) {
+  const [mobileMenu, setMobileMenu] = useState(false);
+
+  async function logout() {
+    await supabase.auth.signOut();
+  }
+
+  const current = menu.find((item) => item[0] === page);
+
+  return (
+    <div className="dashboard-layout">
+      <aside className={mobileMenu ? "sidebar open" : "sidebar"}>
+        <div className="sidebar-brand">
+          <div className="logo">S</div>
+          <strong>SELLORA</strong>
+        </div>
+
+        <div className="business-switcher">
+          <div className="business-icon">B</div>
+          <div>
+            <strong>My Business</strong>
+            <small>Business account</small>
+          </div>
+        </div>
+
+        <nav className="side-nav">
+          {menu.map(([id, icon, label]) => (
+            <button
+              key={id}
+              className={page === id ? "selected" : ""}
+              onClick={() => {
+                setPage(id);
+                setMobileMenu(false);
+              }}
+            >
+              <span>{icon}</span>
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-bottom">
+          <button onClick={() => setPage("settings")}>
+            ⚙ Settings
+          </button>
+
+          <button className="logout" onClick={logout}>
+            ↪ Log out
+          </button>
+        </div>
+      </aside>
+
+      {mobileMenu && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setMobileMenu(false)}
+        />
+      )}
+
+      <section className="main-area">
+        <header className="topbar">
+          <button
+            className="mobile-menu"
+            onClick={() => setMobileMenu(true)}
+          >
+            ☰
+          </button>
+
+          <div>
+            <span className="top-label">SELLORA</span>
+            <h1>{current?.[2] || "Settings"}</h1>
+          </div>
+
+          <div className="top-user">
+            <div className="notification">♢</div>
+            <div className="user-avatar">
+              {(session.user.email || "U")[0].toUpperCase()}
+            </div>
+          </div>
+        </header>
+
+        <div className="content">
+          {page === "dashboard" && <Overview session={session} />}
+          {page === "products" && <Products />}
+          {page === "customers" && <Customers />}
+          {page === "orders" && <Orders />}
+          {page === "assistant" && <Assistant />}
+          {page === "settings" && <Settings session={session} />}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Overview({ session }) {
+  return (
+    <>
+      <div className="welcome">
+        <div>
+          <span className="eyebrow">BUSINESS OVERVIEW</span>
+          <h2>Good to see you 👋</h2>
+          <p>Here's what's happening with your business today.</p>
+        </div>
+
+        <button className="primary-action">+ New order</button>
+      </div>
+
+      <div className="dashboard-stats">
+        <Stat
+          icon="💰"
+          title="Total sales"
+          value="TZS 0"
+          change="+0%"
+        />
+
+        <Stat
+          icon="▤"
+          title="Orders"
+          value="0"
+          change="+0%"
+        />
+
+        <Stat
+          icon="♙"
+          title="Customers"
+          value="0"
+          change="+0%"
+        />
+
+        <Stat
+          icon="📦"
+          title="Products"
+          value="0"
+          change="Active"
+        />
+      </div>
+
+      <div className="dashboard-grid">
+        <div className="panel">
+          <div className="panel-heading">
+            <div>
+              <h3>Sales overview</h3>
+              <p>Your sales activity will appear here.</p>
+            </div>
+
+            <select>
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>This year</option>
+            </select>
+          </div>
+
+          <div className="empty-chart">
+            <div className="chart-line">⌁⌁⌁⌁⌁⌁⌁⌁</div>
+            <strong>No sales data yet</strong>
+            <p>Create your first order to start tracking sales.</p>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-heading">
+            <div>
+              <h3>AI Assistant</h3>
+              <p>Customer conversations</p>
+            </div>
+
+            <span className="live">● LIVE</span>
+          </div>
+
+          <div className="ai-empty">
+            <div className="big-ai">✦</div>
+            <strong>Your AI assistant is ready</strong>
+            <p>
+              Connect your customer channels and SELLORA will help
+              handle common questions.
+            </p>
+
+            <button className="secondary-action">
+              Configure AI
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel quick-panel">
+        <div className="panel-heading">
+          <div>
+            <h3>Quick actions</h3>
+            <p>Manage your business quickly.</p>
+          </div>
+        </div>
+
+        <div className="quick-actions">
+          <button>
+            <span>+</span>
+            Add product
+          </button>
+
+          <button>
+            <span>♙</span>
+            Add customer
+          </button>
+
+          <button>
+            <span>▤</span>
+            Create order
+          </button>
+
+          <button>
+            <span>✦</span>
+            Configure AI
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Stat({ icon, title, value, change }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-top">
+        <div className="stat-icon">{icon}</div>
+        <span>{change}</span>
+      </div>
+
+      <small>{title}</small>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function Products() {
+  return (
+    <PagePlaceholder
+      icon="▣"
+      title="Products"
+      text="Your products will appear here."
+      button="+ Add product"
+    />
+  );
+}
+
+function Customers() {
+  return (
+    <PagePlaceholder
+      icon="♙"
+      title="Customers"
+      text="Your customers will appear here."
+      button="+ Add customer"
+    />
+  );
+}
+
+function Orders() {
+  return (
+    <PagePlaceholder
+      icon="▤"
+      title="Orders"
+      text="Your orders will appear here."
+      button="+ Create order"
+    />
+  );
+}
+
+function Assistant() {
+  return (
+    <div className="assistant-page">
+      <div className="assistant-header">
+        <div className="big-ai">✦</div>
+        <div>
+          <span className="eyebrow">SELLORA AI</span>
+          <h2>Your business assistant</h2>
+          <p>
+            Ask questions about your products, customers and orders.
+          </p>
+        </div>
+      </div>
+
+      <div className="chat-box">
+        <div className="assistant-message">
+          <div className="chat-avatar">S</div>
+          <div>
+            <strong>SELLORA AI</strong>
+            <p>
+              Hello! I'm ready to help you manage your business.
+              What would you like to know?
+            </p>
+          </div>
+        </div>
+
+        <div className="suggestions">
+          <button>How are my sales doing?</button>
+          <button>Which products should I promote?</button>
+          <button>Show today's orders</button>
+        </div>
+
+        <div className="chat-input">
+          <input placeholder="Ask SELLORA AI..." />
+          <button>→</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Settings({ session }) {
+  return (
+    <div className="panel settings-panel">
+      <span className="eyebrow">ACCOUNT</span>
+      <h2>Settings</h2>
+
+      <div className="setting-row">
+        <span>Email</span>
+        <strong>{session.user.email}</strong>
+      </div>
+
+      <div className="setting-row">
+        <span>Authentication</span>
+        <strong>Supabase Auth</strong>
+      </div>
+
+      <div className="setting-row">
+        <span>SELLORA version</span>
+        <strong>1.0.0</strong>
+      </div>
+    </div>
+  );
+}
+
+function PagePlaceholder({ icon, title, text, button }) {
+  return (
+    <div className="placeholder">
+      <div className="placeholder-icon">{icon}</div>
+      <span className="eyebrow">SELLORA</span>
+      <h2>{title}</h2>
+      <p>{text}</p>
+      <button className="primary-action">{button}</button>
     </div>
   );
 }
